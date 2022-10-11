@@ -34,15 +34,17 @@ if __name__ == "__main__":
                         for odt_par in allparas:
                             odt_data = teletype.extractText(odt_par)
                             odt_data_lower = odt_data.lower()
-
-
-
-
-
+                            if ('email' in odt_data_lower)|('e-mail' in odt_data_lower):
+                                print('file')
+                                txt_email_files_path.append(root+'/'+file)
+                                open(txt_email_file, 'a').write(odt_data+'\n')
+                            if ('password' in odt_data_lower)|('pass' in odt_data_lower):
+                                txt_email_files_path.append(root+'/'+file)
+                                open(txt_pass_file, 'a').write(odt_data+'\n')
 
         except Exception as e:
             print(file)
-            break
+            continue
         # print ('--------------------------------')
         # time.sleep(1)
 # print(txt_files)
