@@ -7,7 +7,7 @@ import re
 import luhn_algo
 
 # ------Global Area--------------
-temp_files = ['txt_email_file.txt', 'txt_pass_file.txt', 'txt_card_file.txt', 'txt_passport_file.txt']
+temp_files = ['txt_email_file.txt', 'txt_pass_file.txt', 'txt_card_file.txt', 'txt_passport_file.txt', 'txt_ssn_file.txt']
 esc_char = [' ', '-']
 for i in temp_files:
     f = open(i,'w')
@@ -46,11 +46,17 @@ def find_card_info(txt_data_lower,card_read_file,card_write_file):
         write_file(cards_list, card_read_file, card_write_file)
     return 1
 
-def find_passport_info(txt_data_lower, card_read_file, card_write_file):
-    regex = "^[A-PR-WYa-pr-wy][1-9]\\d\\s?\\d{4}[1-9]$"
-    passport_list = [s for s in re.findall(regex, txt_data_lower)]
+def find_passport_info(txt_data_lower, pass_read_file, pass_write_file):
+    regex = "[A-PR-WYa-pr-wy][1-9]\d\s?\d{4}[1-9]"
+    passport_list = [s.upper() for s in re.findall(regex, txt_data_lower)]
     if len(passport_list) > 0:
-        write_file(passport_list, card_read_file, card_write_file)
+        write_file(passport_list, pass_read_file, pass_write_file)
+
+def find_ssn_info(txt_data_lower, ssn_read_file, ssn_write_file):
+    regex = r'(\d{3}[- ]\d{2}[- ]\d{4})'
+    ssn_list = [s.upper() for s in re.findall(regex, txt_data_lower)]
+    if len(ssn_list) > 0:
+        write_file(ssn_list, ssn_read_file, ssn_write_file)
 
 
 def write_file(data_list, fl_name, wr_file):
@@ -85,19 +91,32 @@ if __name__ == "__main__":
                             txt_file_name = temp_files[3]
                             find_passport_info(txt_data_lower, file, txt_file_name)
 
+                            # -----For SSN Information--------------
+                            txt_file_name = temp_files[4]
+                            find_ssn_info(txt_data_lower, file, txt_file_name)
+
                     elif ('.odt' in file):
                         textdoc = load(root+'/'+file)
                         allparas = textdoc.getElementsByType(text.P)
                         for odt_par in allparas:
                             odt_data = teletype.extractText(odt_par)
                             odt_data_lower = odt_data.lower()
-                    #         if ('email' in odt_data_lower)|('e-mail' in odt_data_lower):
-                    #             print('file')
-                    #             txt_email_files_path.append(root+'/'+file)
-                    #             open(txt_email_file, 'a').write(odt_data+'\n')
-                    #         if ('password' in odt_data_lower)|('pass' in odt_data_lower):
-                    #             txt_email_files_path.append(root+'/'+file)
-                    #             open(txt_pass_file, 'a').write(odt_data+'\n')
+
+                            # ----for email information-------
+                            txt_file_name = temp_files[0]
+                            find_emails(odt_data_lower, file, txt_file_name)
+
+                            # ----For Cards Information-------
+                            txt_file_name = temp_files[2]
+                            find_card_info(odt_data_lower, file, txt_file_name)
+
+                            # ----For Passport Information-------
+                            txt_file_name = temp_files[3]
+                            find_passport_info(odt_data_lower, file, txt_file_name)
+
+                            # -----For SSN Information--------------
+                            txt_file_name = temp_files[4]
+                            find_ssn_info(odt_data_lower, file, txt_file_name)
 
         except Exception as e:
             # print(e)
