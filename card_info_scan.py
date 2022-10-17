@@ -6,81 +6,91 @@ from odf.opendocument import load
 import re
 import luhn_algo
 
+# ------Global Area--------------
 temp_files = ['txt_email_file.txt', 'txt_pass_file.txt', 'txt_card_file.txt', 'txt_passport_file.txt']
+esc_char = [' ', '-']
 for i in temp_files:
     f = open(i,'w')
     f.close
 
+# ----------Functions------------
+def find_emails(txt_data_lower, email_read_file, email_write_file):
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    email_list = [s for s in re.findall(regex, txt_data_lower)]
+    if len(email_list) > 0:
+        write_file(email_list, email_read_file, email_write_file)
+    return 1
+def find_card_info(txt_data_lower,card_read_file,card_write_file):
+    # lower_str: input string in lower case
+    # cards_list = [s for s in re.findall(r"\d{16}", txt_data_lower)]
+    # cards_list = [s for s in re.findall(r"[\d]{16}", txt_data_lower)]
+    c_no = ''
+    cards_list = []
+    for char in txt_data_lower:
+        if char.isdigit():
+            c_no += char
+            if len(c_no) == 16:
+                if int(c_no) == 0:  # to remove 00...00 entries
+                    c_no = ''
+                    continue
+                if luhn_algo.is_luhn_valid(c_no):
+                    cards_list.append(c_no)
+                c_no = ''
+        elif char in esc_char:
+            continue
+        else:
+            c_no = ''
+            continue
+
+    if len(cards_list) > 0:
+        write_file(cards_list, card_read_file, card_write_file)
+    return 1
+
+def find_passport_info(txt_data_lower, card_read_file, card_write_file):
+    regex = "^[A-PR-WYa-pr-wy][1-9]\\d\\s?\\d{4}[1-9]$"
+    passport_list = [s for s in re.findall(regex, txt_data_lower)]
+    if len(passport_list) > 0:
+        write_file(passport_list, card_read_file, card_write_file)
+
+
+def write_file(data_list, fl_name, wr_file):
+    if fl_name in temp_files:  # to skip cards from our own list
+        return 0
+    data_file = open(wr_file, 'a')
+    for i in data_list:
+        data_file.write(i + '\n')
+    data_file.close()
+    return 1
+
+# ---------------main function----------------------------------
 if __name__ == "__main__":
-    for (root,dirs,files) in os.walk('/home/sachin', topdown=True):
+    # for (root,dirs,files) in os.walk('/home/sachin', topdown=True):
+    for (root, dirs, files) in os.walk('.', topdown=True):
         try:
             if len(files):
                 for file in files:
                     if ('.txt' in file) | ('.csv' in file):
-                        # print(file)
-                        # if file == 'tst_case_file.txt':
-                        #     print(file)
                         file_data = open(root+'/'+file,'r').read()
                         for txt_data in file_data.split('\n'):
                             txt_data_lower = txt_data.lower()
                             # ----for email information-------
                             txt_file_name = temp_files[0]
-                            regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-                            email_list = [s for s in re.findall(regex, txt_data_lower)]
-                            if len(email_list) > 0:
-                                if file in temp_files: # to skip cards from our own list
-                                    # print('own file')
-                                    continue
-                                email_file = open(txt_file_name, 'a')
-                                for i in email_list:
-                                    # if int(i) == 0: #to remove 00...00 entries
-                                    #     continue
-                                    i.replace(' ','')
-                                    email_file.write(i+'\n')
-                                email_file.close()
+                            find_emails(txt_data_lower,file,txt_file_name)
 
                             # ----For Cards Information-------
                             txt_file_name = temp_files[2]
-                            # cards_list = [s for s in re.findall(r"\d{16}", txt_data_lower)]
-                            cards_list = [s for s in re.findall(r"[\d]{16}", txt_data_lower)]
-                            if len(cards_list) > 0:
-                                if file in temp_files: # to skip cards from our own list
-                                    # print('own file')
-                                    continue
-                                card_file = open(txt_file_name, 'a')
-                                for i in cards_list:
-                                    if int(i) == 0: #to remove 00...00 entries
-                                        continue
-                                    i.replace(' ','')
-                                    if luhn_algo.is_luhn_valid(i):
-                                        card_file.write(i+'\n')
-                                        # print(root,file, i)
-                                card_file.close()
+                            find_card_info(txt_data_lower,file,txt_file_name)
 
                             # ----For Passport Information-------
                             txt_file_name = temp_files[3]
-                            regex = "^[A-PR-WYa-pr-wy][1-9]\\d\\s?\\d{4}[1-9]$"
-                            passport_list = [s for s in re.findall(regex, txt_data_lower)]
-                            if len(passport_list) > 0:
-                                if file in temp_files: # to skip cards from our own list
-                                    # print('own file')
-                                    continue
-                                passport_file = open(txt_file_name, 'a')
-                                for i in passport_list:
-                                    # if int(i) == 0: #to remove 00...00 entries
-                                    #     continue
-                                    i.replace(' ','')
-                                    passport_file.write(i+'\n')
-                                passport_file.close()
+                            find_passport_info(txt_data_lower, file, txt_file_name)
 
-
-
-                            # elif ('.odt' in file):
-                    #     textdoc = load(root+'/'+file)
-                    #     allparas = textdoc.getElementsByType(text.P)
-                    #     for odt_par in allparas:
-                    #         odt_data = teletype.extractText(odt_par)
-                    #         odt_data_lower = odt_data.lower()
+                    elif ('.odt' in file):
+                        textdoc = load(root+'/'+file)
+                        allparas = textdoc.getElementsByType(text.P)
+                        for odt_par in allparas:
+                            odt_data = teletype.extractText(odt_par)
+                            odt_data_lower = odt_data.lower()
                     #         if ('email' in odt_data_lower)|('e-mail' in odt_data_lower):
                     #             print('file')
                     #             txt_email_files_path.append(root+'/'+file)
