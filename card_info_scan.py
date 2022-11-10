@@ -1,5 +1,7 @@
 # This file search for the Credit card number in files
 import os
+import platform
+import socket
 import time
 from odf import text, teletype
 from odf.opendocument import load
@@ -13,7 +15,15 @@ for i in temp_files:
     f = open(i,'w')
     f.close
 
+scan_info = {}
 # ----------Functions------------
+def get_machine_info():
+    scan_info['comp_name'] = socket.gethostname()
+    scan_info['os_info'] = platform.system()
+    scan_info['time_stamp'] = time.time()
+    return 0;
+
+
 def find_emails(txt_data_lower, email_read_file, email_write_file):
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     email_list = [s for s in re.findall(regex, txt_data_lower)]
@@ -71,7 +81,10 @@ def write_file(data_list, fl_name, wr_file):
 # ---------------main function----------------------------------
 if __name__ == "__main__":
     # for (root,dirs,files) in os.walk('/home/sachin', topdown=True):
-    for (root, dirs, files) in os.walk('.', topdown=True):
+    get_machine_info()
+    print(scan_info)
+    # for (root, dirs, files) in os.walk('.', topdown=True):
+    for (root, dirs, files) in os.walk('/', topdown=True):
         try:
             if len(files):
                 for file in files:
